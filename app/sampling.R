@@ -9,5 +9,5 @@ inverse_sample <- function(cdf_inverse, args, sample_size) {
 # inverse_exponential is the inverse of an exponential distribution with
 # parameter lambda
 inverse_exponential <- function(x, lambda) {
-  return(-1/lambda * log(1 - x))
+  return(-1 / lambda * log(1 - x))
 }
