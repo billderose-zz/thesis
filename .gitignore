@@ -3,6 +3,10 @@
 *.aux
 *.log
 *.gz
+*.nav
+*.out
+*.snm
+*.toc
 
 # Compiled source #
 ###################
@@ -41,3 +45,9 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+
+# R #
+#############
+.RData
+.RHistory
