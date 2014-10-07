@@ -36,13 +36,11 @@
 			\item Where does this get us?
 		\end{itemize}
 		\pause
-		\item Inverse transform sampling:
-		\begin{itemize}
 		\item Cumulative distribution function: $z = h(x) = \int_{-\infty}^x p(\hat{x}) \,d\hat{x}$
+		\pause		
 		\item Idea: transform the uniform random variables using the inverse of the 
 		indefinite integral of the desired distribution. 
 		$$x = h^{-1}(z) = h^{-1}\bigg( \int_{-\infty}^x p(\hat{x}) \,d\hat{x}\bigg)$$
-		\end{itemize} 
 	\end{itemize}
 }
 \frame{
@@ -60,13 +58,14 @@
 }
 \subsection{MCMC}
 \frame{
-	\frametitle{Markov Chain Monte Carlo}
+	\frametitle{Look Ahead}
 	\begin{itemize}[<+->]
 	\item Inverse transform requires us to evaluate an indefinite integral -- sometimes infeasible. 
 	\item My thesis: deep dive into sampling methods for complex distributions and high dimensional space
 		\begin{itemize}
 			\item Gibbs Sampling
 			\item Slice Sampling
+			\item Markov Chain Monte Carlo
 			\item Hamiltonian Monte Carlo
 		\end{itemize}
 	\end{itemize}

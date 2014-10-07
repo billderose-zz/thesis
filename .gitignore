@@ -7,7 +7,9 @@
 *.out
 *.snm
 *.toc
-
+*.bib
+*.bbl
+*.blg
 # Compiled source #
 ###################
 *.com

@@ -1,0 +1,204 @@
+\documentclass[11pt, oneside]{article}     % use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                  	% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or epsß with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\newcommand{\pr}{\mathrm{P}}
+\usepackage{amsmath}
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother
+\title{A Sampling of Ideas}
+\author{Bill DeRose
+\\ Advisor: Gabe Chandler}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+\section{Introduction}
+The  difficulties we face in computational statistics are a consequence of modern technology.
+%It is a consequence of modern technology that we face computational difficulties in the field of statistics. 
+We should be so lucky to face the problem of designing algorithms to generate truly random numbers. And yet, we delude ourselves into believing there is randomness where there is none.
+
+\begin{figure}[!htbp]
+   \centering
+   \includegraphics[scale=0.75]{images/random?} % requires the graphicx package
+   \caption{Which is random?}
+   \label{fig:example}
+\end{figure}
+The image on the left is genuine randomness, while the image on the right is too evenly spaced for it to be \emph{truly} random. In actuality, the left plots star locations while the right depicts the positions of glowworms on the ceiling of a cave in New Zealand. The glowworms spread themselves out evenly to reduce competition for food amongst themselves; the even distribution is the result of a non-random force. The right image suggests true randomness appears in clusters.
+
+In our study of sampling methods, we assume the existence of a random
+number generator that allows us to sample $U \sim \mbox{Unif}(0,1)$. From this, we explore
+the techniques and methods that allow us to sample from more complex distributions. We begin with a
+review of classical sampling (simple sampling, rejection sampling, importance sampling) before directing the majority of our attention to Monte Carlo based methods. In specific, we explore the advantages of Hamiltonian and gradient based Monte Carlo over traditional Markov Chain Monte Carlo simulations.
+By treating the state space as a dynamical system, we may apply Hamiltonian dynamics to 
+explore the target distribution more efficiently. However, before we embark on the discussion of gradient methods, we discuss the classical Markov Chain Monte Carlo algorithm and its application to sampling from high-dimensional distributions. 
+
+\subsection{Introduction to Simulation}
+
+\subsection{Markov Chain Monte Carlo}
+Although the sampling techniques we have discussed worked well, they required us to 
+have a closed form cdf of the target distribution. As we will see, the previous approaches also fail as we move to higher dimensional space and the curse of dimensionality sets in. We turn to Markov Chain Monte Carlo simulations because they ameliorate many of the problems faced by classical sampling.
+
+
+A Monte Carlo simulation allows us to approximate the probability of certain outcomes by running a large number of
+trials to obtain an empirical distribution of possible events. A Markov chain is a series of random variables 
+$\vec{x}^{(1)}, \ldots, \vec{x}^{(m)}$ such that
+\begin{equation}
+\pr(\vec{x}^{(m + 1)} | \vec{x}^{(m)}, \vec{x}^{(m-1)}, \ldots, \vec{x}^{(1)}) =\pr(\vec{x}^{(m + 1)} | \vec{x}^{(m)}) 
+\end{equation}
+Markov Chain Monte Carlo simulations use Markov chains whose stationary (equilibrium) distribution we wish to sample from. By initializing the Markov chain with an initial state and transition probabilities, we may run the chain for a ``sufficient" number of steps to draw samples from the desired distribution. It is common to ignore some number of samples at the beginning (burn-in), and then consider only every $n^{{th}}$ sample when computing an expectation.
+
+\subsection{Metropolis Hastings}
+
+\subsection{Slice Sampling}
+As before, we desire to sample from a distribution, $\tilde{p(x)}$, that we know
+up to a normalizing factor (i.e. $p(x) = \hat{p}(x)/Z_p$) and may easily evaluate.
+We turn now to a technique that is more robust to hyperparameter tuning, such
+as the stepsize in Metropilis-Hastings.
+
+Slice sampling draws samples from the volume 
+under the curve of $\hat{p}(x)$. If we imagine our target
+distribution on a dart board which we throw a million darts at,
+slice sampling removes all the darts above the curve of the distribution
+so that we are left with the desired pdf.
+More specifically, in one dimension, slice sampling provides a method for making transitions
+from a two-dimensional point $(x, u)$ lying under 
+the curve $\hat{p}(x)$ another point $(x', u')$ lying under the same curve,
+such that the probability distribution of $(x, u)$ tends to a uniform distribution
+over the area under the curve $\hat{p}(x)$ (Mackay, Chapter 29, 
+http://www.cs.toronto.edu/~mackay/itprnn/ps/358.386.pdf).
+\begin{algorithm}
+\caption{A Slice Sample}\label{euclid}
+\begin{algorithmic}[1]
+\Procedure{}{}
+\State Evaluate $\tilde{p}(x^{(t)})$
+\State Draw a vertical coordinate $u^{(t+1)} \sim Uniform[0, \tilde{p}(x^{(t)})]$
+\State Create a horizontal interval $(x_l, x_r)$ enclosing $x^{(t)}$
+\BState \emph{loop}:
+\State Draw $x^{(t+1)} \sim Uniform(x_l, x_r)$
+\If {$\tilde{p}(x^{(t+1)}) > u^{(t+1)}$} \Return $x^{(t+1)}$
+\Else~Modify the interval $(x_l, x_r)$ and \textbf{goto} \emph{loop}
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+Although both slice samplers and Metropolis samplers
+naviagate the sample space by random walk, the slice sampler
+is able to adaptively update its step size to match the characteristics
+of the distribution whereas a Metropolis
+sampler must have this value chosen a priori. A disadvntage of the Metropolis-Hastings
+alrogithm is its dependence on a good proposal
+distribution. A slice sampler is able to adjust its window in linear time, 
+whereas a tranditional Metropolis
+sampler does this in quadratic time. Moreover, there are no rejections
+in slice sampling.
+
+As we will see later in the Hybrid Monte Carlo, slice sampling introduces
+an auxiliary variable to facilitate sampling from the target
+distribution $\hat{p}$. We eventually marginalize out the
+auxiliary varible to sample from the desired distribution. The key insight of slice sampling
+is that drawing a sample from the distribution of $\hat{p}(x)$ is the same
+as uniformly sampling from the points underneath the curve of such a distribution,
+as we saw the the darts example. 
+Concretely, we want all the points $(x, u)$ such that $0 \le u \le \hat{p}(x)$ 
+where $\dfrac{\hat{p}(x)}{Z_p} = p(x)$ and $Z_p = \int \hat{p}(x)\,dx$. 
+
+To achieve this, note that $Z_p$ is literally the area under the curve
+of $\hat{p}(x)$ so that uniformly choosing a single point $(x, u)$ occurs
+with probability $1/Z_p$. Thus, samples are then drawn from the joint distribution
+$p(x, u)$ given by
+ \begin{displaymath}
+   p(x, u) = \left\{
+     \begin{array}{lr}
+        \dfrac{1}{Z_p} &\mbox{if}~0 \le u \le \hat{p}(x)\\
+       0 & \text{otherwise}
+     \end{array}
+   \right.
+\end{displaymath} 
+So that the marginal distribution of $x$ is given by
+$$\int p(x, u) du = \int_0^{\hat{p}(x)}\dfrac{1}{Z_p}du =\dfrac{\hat{p}(x)}{Z_p} = p(x)$$
+To sample from $p(x, u)$ we employ Gibbs sampling in which we alternate
+sampling $x$ and $u$. 
+
+
+To see that the successive sampling preserves the uniform distribution on the subgraph of $\tilde{p}(x)$, note that if $x^{(t)} \sim p(x)$ and $u^{(t+1)} \sim
+\mathcal{U}[0, \tilde{p}(x^{(t)})]$ then $$(x^{(t)}, u^{(t+1)}) \sim p(x^{(t)})\dfrac{\mathbb{I}(0 \le u^{(t+1)} \le \tilde{p}(x^{(t)})}{\tilde{p}(x^{(t)})} \propto \mathbb{I}(0 \le u^{(t+1)} \le \tilde{p}(x^{(t)})$$
+And if $x^{(t+1)} \sim \mathcal{U}[A^{(t+1)}]$ where $A^{(t+1)} = \{x : ~p(x) \ge u^{(t+1)}\}$ then $$(x^{(t)}, u^{(t+1)}, x^{(t+1)}) \sim p(x^{(t)})\dfrac{\mathbb{I}(0 \le u^{(t+1)} \le \tilde{p}(x^{(t)})}{\tilde{p}(x^{(t)})}\dfrac{\mathbb{I}(x^{(t+1)} \in A^{(t+1)})}{\mbox{mes}(A^{(t+1)})}$$
+Where $\mbox{mes}A^{(t+1)}$ denotes the measure of the set. Thus
+\begin{align*}
+(u^{(t+1)}, x^{(t+1)}) \sim{}& C \int \mathbb{I}_{0\le u \le \tilde{p}(x)}\dfrac{\mathbb{I}_{u \le \tilde{p}(x^{(t+1)})}}{\mbox{mes}(A^{(t+1)})}\,dx\\
+={}& C\mathbb{I}_{0\le u \le \tilde{p}(x^{(t+1)})} \int \dfrac{\mathbb{I}_{u \le \tilde{p}(x)}}{\mbox{mes}(A^{(t+1)})}\,dx\\
+\propto{}& \mathbb{I}_{0\le u \le \tilde{p}(x^{(t+1)})}
+\end{align*}
+\subsubsection{Reflective Slice Sampling}
+Here we assume that we are able to compute both $\hat{p}(x)$ and its gradient. We proceed 
+as before and draw uniformly from $[0, \hat{p}(x)]$ to define a $n$-dimensional
+slice. We also introduce $n$ momentum variables, written as a vector $\vec{r}$
+which indicate the current direction and speed of motion through state space.
+At each iteration, we sample $\vec{r}$ and repeatedly update $x$ by stepping
+in the direction of $r$ for some number of steps before arriving at
+our new proposal.
+
+We use the gradient to tell us how we should update the momentum when we
+are pushed out of the target distribution. The reflected momentum direction is 
+a function of the incident momentum and the partial derivatives.
+\subsubsection{Refractive Slice Sampling}
+\subsubsection{Ellipctical Slice Sampling}
+
+\subsection{Gibbs Sampling}
+Below is an implementation of such a Markov Chain Monte Carlo sampler, a Gibbs 
+Sampler which will sample from a 2D exponential.
+<<>>=
+Exp.Bounded <- function(rate, B) {
+  # rexpT samples from the exponential distribution
+  # until a value less than B is observed
+  x <- rexp(1, rate)
+  while (x > B) {
+    x <- rexp(1, rate)
+  }
+  return(x)
+}
+
+Gibbs.Sampler <- function(M, B) {
+  # Gibbs.Sampler uses the Gibbs sampling method
+  # to sample from a joint distribution given our
+  # knowledge of the condition distributions.
+  mat <- matrix(ncol=2, nrow = M)
+  x <- 1
+  y <- 1
+  mat[1, ] <- c(x, y)
+  for (i in 2:M) {
+      x <- Exp.Bounded(y, B)
+      y <- Exp.Bounded(x, B)
+      mat[i,] <- c(x, y)
+  }
+  layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+  plot(mat, main="Joint Distribution", xlab="X",ylab="Y")
+  hist(mat[ , 1], main="Marginal dist. of X", xlab="X")
+  hist(mat[ , 2], main="Marginal dist. of Y", xlab="Y")
+}
+@
+<<gibbsSampler, fig=True, height=6, width=8>>=
+Gibbs.Sampler(1000, 10)
+@
+
+\subsection{Hamiltonian Monte Carlo}
+The physics used in the Hamiltonian Monte Carlo describe the total
+energy of a system composed by a frictionaless particle sliding on a surface.
+\section{Physical Interpretation}
+A canonical ensemble is the statistical ensemble used to represent the possible
+states of a mechanical system in thermal equilibrium with a heat bath. The 
+idea that ``a statistical ensemble is a probability distribution for the state 
+of the system." was introduced by J. Willard Gibbs in 1902 (Elementary Principles in Statistical Mechanics).
+
+\end{document}
