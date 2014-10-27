@@ -1,26 +1,32 @@
-\documentclass[11pt, oneside]{article}     % use "amsart" instead of "article" for AMSLaTeX format
-\usepackage{geometry}                  	% See geometry.pdf to learn the layout options. There are lots.
-\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
-%\geometry{landscape}                		% Activate for for rotated page geometry
-%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
-\usepackage{graphicx}				% Use pdf, png, jpg, or epsß with pdflatex; use eps in DVI mode
-								% TeX will automatically convert eps --> pdf in pdflatex		
+\documentclass[11pt, a4paper]{article}
+\usepackage{graphicx}				
 \usepackage{amssymb}
 \usepackage{algorithm}
+\usepackage{enumerate}
 \usepackage[noend]{algpseudocode}
-\newcommand{\pr}{\mathrm{P}}
+\usepackage{Sweave}
 \usepackage{amsmath}
+\usepackage{amsthm}
 \makeatletter
 \def\BState{\State\hskip-\ALG@thistlm}
 \makeatother
-\title{A Sampling of Ideas}
-\author{Bill DeRose
-\\ Advisor: Gabe Chandler}
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section] % reset theorem numbering for each chapter
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Example} % same for example numbers
+\newtheorem{lem}[thm]{Lemma}
+\newcommand{\R}{\mathbb{R}} 
+\newcommand{\pr}{\mathrm{Pr}}
 
-
+\title{Sampling from High Dimensional Distributions}
+\author{Bill DeRose \\ Advisor: Gabe Chandler}
 \begin{document}
 \SweaveOpts{concordance=TRUE}
+\input{thesis_draft_2-concordance}
 \maketitle
+\tableofcontents
+\part{Introduction}
 \section{Introduction}
 The  difficulties we face in computational statistics are a consequence of modern technology.
 %It is a consequence of modern technology that we face computational difficulties in the field of statistics. 
@@ -40,8 +46,109 @@ the techniques and methods that allow us to sample from more complex distributio
 review of classical sampling (simple sampling, rejection sampling, importance sampling) before directing the majority of our attention to Monte Carlo based methods. In specific, we explore the advantages of Hamiltonian and gradient based Monte Carlo over traditional Markov Chain Monte Carlo simulations.
 By treating the state space as a dynamical system, we may apply Hamiltonian dynamics to 
 explore the target distribution more efficiently. However, before we embark on the discussion of gradient methods, we discuss the classical Markov Chain Monte Carlo algorithm and its application to sampling from high-dimensional distributions. 
+\subsection{Related works}
+In this section, I will discuss the works on which my thesis and result depend. I imagine I will draw heavily from my annotated bibliography to give credit to my sources. 
+\subsection{Prospective}
+At this point I will have either given sufficient motivation for my research or will provide it here. I would like to present a few interesting (and probably difficult cases) where traditional techniques run into problems. I hope
+to give a glimpse of the framework of how I think all these ideas fit together and how the reader should
+conceptualize the topics presented therein.
+\section{Introduction to Simulation}
+Following the prospective, we begin with the Fundamental Theorem of Simulation \begin{thm} Simulating $$X \sim f(x)$$ is equivalent to simulating $$(X, U) \sim \mathcal{U}\{(x, u)~:~0<u<f(x)\}.$$\end{thm}
+This result plays a large role in our later investigation of slice sampling
+and we will flesh it out a bit more here. If we knew where the support and mode of a distribution were, and we could evaluate $f(x)$, we could simply
+sample uniformly from the rectangle 
 
-\subsection{Introduction to Simulation}
+\subsection{Markov Chains}
+\begin{defn}
+A sequence of random variables 
+$X_1, \ldots, X_n$ is a Markov chain if
+\begin{equation}
+\pr(X_{n + 1} | X_n, X_{n-1}, \ldots, X_1) =\pr(X_{n + 1} | X_n) 
+\end{equation}
+\end{defn}
+The defining characteristic of a Markov chain is that the conditional
+distribution of $X_{n+1}$ is solely dependent on $X_n$. We define our state
+space as the set of values $X_i$ may take. Every Markov chain has an initial
+distribution, $\mu$, where $\pr{(X_1 = x_i)}$ and a transition function $P$. If the state
+space is finite and $X$ may take on values in the range $\{x_1, \ldots, x_n\}$ 
+then we define the transition function $P$ as $$P(i, j) = \pr{(X_{n+1} = x_j | X_{n} = x_i)} = p_{ij}$$
+For our purposes, we deal mostly with uncountably infinite state spaces in which we
+consider the initial distribution as an unconditional probability distribution
+and the transition function as a conditional probability distribution. Note that
+stationarity implies that $P$ is invariant, or that it's values remain stationary.
+However, the reverse is not necessarily true.
+
+Given a transition function and an initial distribution $\mu_0$, the marginal
+probability of the $X_1$ is obtained by matrix multiplication $$\mu_1 = \mu P$$
+and similarly, $X_n \sim \mu_n = \mu P^n$. Thus, we see that once the initial
+state is given, the entire chain is dependent on $P$.
+
+We now take a moment to discuss the properties of Markov chains that will 
+be necessary for us to prove convergence of certain sampling routines.
+
+\subsubsection{Stationarity}
+A stochastic process is stationary if for every positive integer $k$
+the distribution of the $k$-tuple
+$$(X_{n+1}, \ldots, X_{n+k})$$ does not depend on $n$. Similarly, 
+the probability of $(X_{n+2}, \ldots, X_{n+k})$ given $X_{n+1}$ does
+not depend on $n$. We call a Markov Chain Stationary iff the marginal distribution of $X_n$
+does not depend on $n$.
+
+
+
+Markov Chain Monte Carlo simulations use Markov chains whose stationary distribution, $\pi$, we wish to sample from. By initializing the Markov chain with an initial state and transition probabilities, we may run the chain for a ``sufficient" number of steps to draw samples from the desired distribution. It is common to ignore some number of samples at the beginning (burn-in), and then consider only every $n^{{th}}$ sample when computing an expectation.
+
+\subsubsection{Irreducibility}
+Irreducibility is another important property of Markov chains which says that
+regardless of the current state of the chain, it is possible to reach any other
+state in a finite amount of time.
+\begin{defn}
+A Markov chain is \emph{irreducibile} if $\exists
+m < \infty$ such that
+$$\pr{(X_{n+m} = x_j | X_n = x_i)} \ge 0$$
+for all $i, j$. 
+\end{defn}
+The property of irreducibility is a first measure of the sensitivity of the Markov chain
+to the initial conditions (Casella, Springer). Once we have shown the irreducibility
+of a chain, it guarntees convergence.
+
+\begin{defn}
+A set $C$ is \emph{small} if there exists an $m > 0$ and a nonzero measure
+$\nu_m$ such that $$P^m(x, x') \ge\nu_m(x_{m})$$
+for all $x \in C$ and for all $x' \in \mathcal{B}(\mathcal{X})$
+\end{defn}
+We may also call a set $C$ small if there exists a constant $\epsilon > 0$ and a probability measure 
+$\nu$ such that $$P(x, A) \ge \epsilon\nu(A), \hspace{10pt} \forall x\in C, \forall A \in \mathcal{B}(\mathcal{X})$$
+What's the intuition behind this?
+\subsubsection{Aperiodicity}
+The period of a state in a Markov chain tells us
+how often we will visit that state. An aperiodic
+chain is one in which 
+
+\subsubsection{Ergodicity}
+\begin{defn} The Markov chain $(X_n)$ is \emph{uniformy ergodic} if 
+$$\lim_{n\to\infty}\sup_{x\in\mathcal{X}} \|P^n(x, \cdot) - \pi \|_{TV} = 0$$
+\end{defn}
+In attempting to show uniform ergodicity, we will make use of the following theorem.
+\begin{thm}
+The following are equivalent:
+\begin{enumerate}[(a)]
+\item $(X_n)$ is uniformly ergodic;
+\item there exist $R \le \infty$ and $r$ such that
+$$\|P^n(x, \cdot) - \pi \|_{TV} < Rr^{-n}, \hspace{10pt} \forall x\in\mathcal{X};$$
+\item $(X_n)$ is aperiodic and $\mathcal{X}$ is a small set;
+\item $(X_n)$ is aperiodic and there exist a small set C and a real $\kappa > 1$
+such that
+$$\sup_{x\in\mathcal{X}} \mathbb{E}_x[k^{\tau C}] <\infty$$
+\end{enumerate}
+\end{thm}
+If the whole space $\mathcal{X}$ is small, there exist a probability distribution,
+$\phi$, on $\mathcal{X}$, constants $\epsilon < 1$ and $\delta > 0$,
+and $n$ such that, if $\phi(A) > \epsilon$ then
+$$\inf_{x\in\mathcal{X}} P^n(x, A) > \delta$$
+We see here the relation between analytical limits and uniform ergodicity,
+giving us an intuition behind the strength of uniform ergodicity. In later chapters,
+this property is refered to as \emph{Doeblin's condition}.
 
 \subsection{Markov Chain Monte Carlo}
 Although the sampling techniques we have discussed worked well, they required us to 
@@ -49,20 +156,23 @@ have a closed form cdf of the target distribution. As we will see, the previous 
 
 
 A Monte Carlo simulation allows us to approximate the probability of certain outcomes by running a large number of
-trials to obtain an empirical distribution of possible events. A Markov chain is a series of random variables 
-$\vec{x}^{(1)}, \ldots, \vec{x}^{(m)}$ such that
-\begin{equation}
-\pr(\vec{x}^{(m + 1)} | \vec{x}^{(m)}, \vec{x}^{(m-1)}, \ldots, \vec{x}^{(1)}) =\pr(\vec{x}^{(m + 1)} | \vec{x}^{(m)}) 
-\end{equation}
+trials to obtain an empirical distribution of possible events. 
 Markov Chain Monte Carlo simulations use Markov chains whose stationary (equilibrium) distribution we wish to sample from. By initializing the Markov chain with an initial state and transition probabilities, we may run the chain for a ``sufficient" number of steps to draw samples from the desired distribution. It is common to ignore some number of samples at the beginning (burn-in), and then consider only every $n^{{th}}$ sample when computing an expectation.
 
 \subsection{Metropolis Hastings}
+This section will provide an in-depth look at the Metropolis-Hastings
+algorithm. It is here that we will really begin to build our understanding of
+how Markov Chain Monte Carlo methods operate concretely. It is here that we
+will also be able to take a look at the different convergence properties of 
+MCMC algorithms. We will begin with a few instances where Metropolis-Hastings does
+well but eventually we will move to cases in which the approach fails, indicating that
+there are better ways to be doing this.
 
-\subsection{Slice Sampling}
+\section{Slice Sampling}
 As before, we desire to sample from a distribution, $\tilde{p(x)}$, that we know
 up to a normalizing factor (i.e. $p(x) = \hat{p}(x)/Z_p$) and may easily evaluate.
 We turn now to a technique that is more robust to hyperparameter tuning, such
-as the stepsize in Metropilis-Hastings.
+as the step size in Metropolis-Hastings.
 
 Slice sampling draws samples from the volume 
 under the curve of $\hat{p}(x)$. If we imagine our target
@@ -93,20 +203,20 @@ http://www.cs.toronto.edu/~mackay/itprnn/ps/358.386.pdf).
 
 
 Although both slice samplers and Metropolis samplers
-naviagate the sample space by random walk, the slice sampler
+navigate the sample space by random walk, the slice sampler
 is able to adaptively update its step size to match the characteristics
 of the distribution whereas a Metropolis
-sampler must have this value chosen a priori. A disadvntage of the Metropolis-Hastings
-alrogithm is its dependence on a good proposal
+sampler must have this value chosen a priori. A disadvantage of the Metropolis-Hastings
+algorithm is its dependence on a good proposal
 distribution. A slice sampler is able to adjust its window in linear time, 
-whereas a tranditional Metropolis
+whereas a traditional Metropolis
 sampler does this in quadratic time. Moreover, there are no rejections
 in slice sampling.
 
 As we will see later in the Hybrid Monte Carlo, slice sampling introduces
 an auxiliary variable to facilitate sampling from the target
 distribution $\hat{p}$. We eventually marginalize out the
-auxiliary varible to sample from the desired distribution. The key insight of slice sampling
+auxiliary variable to sample from the desired distribution. The key insight of slice sampling
 is that drawing a sample from the distribution of $\hat{p}(x)$ is the same
 as uniformly sampling from the points underneath the curve of such a distribution,
 as we saw the the darts example. 
@@ -140,7 +250,107 @@ Where $\mbox{mes}A^{(t+1)}$ denotes the measure of the set. Thus
 ={}& C\mathbb{I}_{0\le u \le \tilde{p}(x^{(t+1)})} \int \dfrac{\mathbb{I}_{u \le \tilde{p}(x)}}{\mbox{mes}(A^{(t+1)})}\,dx\\
 \propto{}& \mathbb{I}_{0\le u \le \tilde{p}(x^{(t+1)})}
 \end{align*}
-\subsubsection{Reflective Slice Sampling}
+
+\subsection{Uniform Ergodicity of the Slice Sampler}
+For the simple case of the $2D$ slice sampler, if we denote
+by $\mu(\omega)$ the Lebesgue measure of the set
+$$\mathcal{L}(\omega) = \{y : f_i(y) \ge \omega\}$$
+the cdf of the transition kernel gives
+\begin{align*}
+\pr\bigg(f_1(X_{t+1} \le \eta)~|~f_x(X_t) = v\bigg) ={}& \int\int \dfrac{\mathbb{I}(0 \le \omega \le v)}{v}\cdot
+\dfrac{\mathbb{I}(\omega \le f_1(x) \le v)}{\mu(\omega)}\,d\omega dx
+\end{align*}
+Where we first draw $\omega$ uniformly on $[0, v]$ and then draw $X_{t+1}$
+uniformly on $\mathcal{L}(\omega)$. Continuing gives
+\begin{align*}
+\pr\bigg(f_1(X_{t+1} \le \eta)~|~f_x(X_t) = v\bigg) ={}& \dfrac{1}{v}\int\dfrac{\mathbb{I}(0 \le \omega \le v)}{\mu(\omega)}\int \mathbb{I}(\omega \le f_1(x) \le v)\,d\omega dx\\
+={}& \dfrac{1}{v}\int
+\dfrac{\mu(\omega) - \mu(\eta)}{\mu(\omega)}\cdot\mathbb{I}(0 \le \omega \le v)\,d\omega\\
+={}&\dfrac{1}{v}\int_0^{\min(\eta, v)}
+\dfrac{\mu(\omega) - \mu(\eta)}{\mu(\omega)}\,d\omega\\
+={}&\dfrac{1}{v}\int_0^v
+\max\bigg(1 -\dfrac{\mu(\eta)}{\mu(\omega)}, 0\bigg)\,d\omega
+\end{align*}
+Which shows that the convergence properties are total dependent on the measure, $\mu$.
+Now, for the main result which we owe Tierney and Mira (1999) who, under
+boundess conditions, established the following result.
+\begin{lem}
+If $f_1$ is bounded and $\mbox{supp}~f_1$ is bounded, the 2D slice sampler
+is uniformly ergodic.
+\end{lem}
+\begin{proof}
+Without loss of generality, assume that $f_1$ is bounded by 1 and that 
+$\mbox{supp}~f_1$ is equal to $(0, 1)$. To prove uniform ergodicity, 
+we will show that the $\mbox{supp}~f_1$ is a small set so that we may invoke
+Doeblin's condition.
+Let $$\xi(v) = \pr\bigg(f_1(X_{t+1} \le \eta)~|~f_x(X_t) = v\bigg)$$
+Note that when $\omega > \nu$, i.e. when $\mu(\nu) > \mu(\omega)$ this probability is 0.
+However, when $v \ge \eta$,
+$$\xi(v) = \dfrac{1}{v}\int_0^\eta
+1 -\dfrac{\mu(\eta)}{\mu(\omega)}\,d\omega$$
+is decreasing in $v$ since it only appears in the denominator outside of the integral.
+When $v \le \eta$ we recognize $$\xi(v) = \dfrac{1}{v}\int_0^v
+1 -\dfrac{\mu(\eta)}{\mu(\omega)}\,d\omega$$ as the average of the
+function $1 -\dfrac{\mu(\eta)}{\mu(\omega)}$
+where $\omega$ is uniformly distributed on $[0, v]$. The larger $\omega$,
+the smaller the measure of $\mathcal{L}(\omega)$ is because there is less of 
+$f_1$ above it. We conclude that $\mu(\omega)$ is decreasing in $\omega$ and thus also decreasing in $v$. 
+Hence, $\xi(v)$ is decreasing in $v$ for all $\eta$. If we think about this more,
+it would not make sense if it were increasing because that would imply that
+we wouldn't be spending enough time in the modes; i.e. the larger $v$ 
+the more likely we are to end up \emph{below} some threshold (away from the mode).
+To find bounds on the cdf of the transition kernal we first find the minimum
+\begin{align*}
+\lim_{v \to 1}\xi(v) ={}&\int_0^\eta 1 - \dfrac{\mu(\eta)}{\mu(\omega)}\,d\omega
+\end{align*}
+which is bounded above by $\int_0^\eta 1 \,d\omega = \mu(\eta)$ and below by $0$. 
+The maximum then is
+\begin{align*}
+\lim_{v \to 0}\xi(v) ={}&\lim_{v \to 0}\dfrac{\int_0^v 1 - \dfrac{\mu(\eta)}{\mu(\omega)}\,d\omega}{v}\\
+={}& \lim_{v \to 0} 1 - \dfrac{\mu(\eta)}{\mu(v)}\\
+={}& 1 - \mu(\eta)
+\end{align*}
+by L'Hopital's rule which is bounded above by 1 and below by 0. By finding
+nondegenerate upper and lower bounds on the cdf of the transition kernel, we may
+derive Doeblin's condition and thus uniform ergodicity. The entire support
+of $f_1$ is thus a small set and uniform ergodicity follows (does it? what about aperiodicity?).
+\end{proof}
+
+Our implementation of the slice sampler may be seen below
+<<fig=TRUE>>=
+dist.x <- seq(-10, 10, length = 1000)
+Slice.Sample <- function(x0, f, nsample, step = 1) {
+  x <- c(x0)
+  for (i in 2:nsample) {
+    u <- runif(1, 0, f(x[i - 1]))
+    l <- x[i - 1] - 1
+    r <- x[i - 1] + 1
+    while (u < f(l)) {
+      l <- l - step
+    }
+    while (u < f(r)) {
+      r <- r + step
+    }
+    while (TRUE) {
+      x.proposal <- runif(1, l, r)
+      if (u < f(x.proposal)) {
+        x[i] <- x.proposal
+        break
+      } else { # drew sample above curve, must shrink slice
+        if (x.proposal < l) {
+          l <- x.proposal
+        } else if (x.proposal > r) {
+          r <- x.proposal
+        }
+      }
+    }
+  }
+  return(x)
+}
+hist(Slice.Sample(1, dnorm, 1000, 1))
+@
+
+\subsection{Reflective Slice Sampling}
 Here we assume that we are able to compute both $\hat{p}(x)$ and its gradient. We proceed 
 as before and draw uniformly from $[0, \hat{p}(x)]$ to define a $n$-dimensional
 slice. We also introduce $n$ momentum variables, written as a vector $\vec{r}$
@@ -152,53 +362,90 @@ our new proposal.
 We use the gradient to tell us how we should update the momentum when we
 are pushed out of the target distribution. The reflected momentum direction is 
 a function of the incident momentum and the partial derivatives.
-\subsubsection{Refractive Slice Sampling}
-\subsubsection{Ellipctical Slice Sampling}
 
-\subsection{Gibbs Sampling}
+\subsection{Convergence of the Slice Sampler}
+After discussing the implementation details of the slice sampler, we will
+verify that it is in fact uniformly ergodic, ensuring that the Markov Chain
+converges to the desired stationary distribution.
+\subsection{Refractive Slice Sampling}
+Here and in the following section we touch on variations of the slice sampler.
+At this point it is not clear to what extent we will deal with them. It may
+very well be the case that we explain what they are and how the sample without delving into
+the finer details such as convergence as we did with the standard slice sampler.
+\subsection{Elliptical Slice Sampling}
+
+\section{Gibbs Sampling}
+The slice sampler leads fairly nicely into Gibbs sampling because
+the successive steps in slice sampling are actually
+Gibbs sampling steps. 
 Below is an implementation of such a Markov Chain Monte Carlo sampler, a Gibbs 
 Sampler which will sample from a 2D exponential.
-<<>>=
-Exp.Bounded <- function(rate, B) {
-  # rexpT samples from the exponential distribution
-  # until a value less than B is observed
-  x <- rexp(1, rate)
-  while (x > B) {
-    x <- rexp(1, rate)
-  }
-  return(x)
-}
+\begin{Schunk}
+\begin{Sinput}
+> Exp.Bounded <- function(rate, B) {
++   # rexpT samples from the exponential distribution
++   # until a value less than B is observed
++   x <- rexp(1, rate)
++   while (x > B) {
++     x <- rexp(1, rate)
++   }
++   return(x)
++ }
+> Gibbs.Sampler <- function(M, B) {
++   # Gibbs.Sampler uses the Gibbs sampling method
++   # to sample from a joint distribution given our
++   # knowledge of the condition distributions.
++   mat <- matrix(ncol=2, nrow = M)
++   x <- 1
++   y <- 1
++   mat[1, ] <- c(x, y)
++   for (i in 2:M) {
++       x <- Exp.Bounded(y, B)
++       y <- Exp.Bounded(x, B)
++       mat[i,] <- c(x, y)
++   }
++   layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
++   plot(mat, main="Joint Distribution", xlab="X",ylab="Y")
++   hist(mat[ , 1], main="Marginal dist. of X", xlab="X")
++   hist(mat[ , 2], main="Marginal dist. of Y", xlab="Y")
++ }
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+> Gibbs.Sampler(1000, 10)
+\end{Sinput}
+\end{Schunk}
+\includegraphics{thesis_draft_2-gibbsSampler}
 
-Gibbs.Sampler <- function(M, B) {
-  # Gibbs.Sampler uses the Gibbs sampling method
-  # to sample from a joint distribution given our
-  # knowledge of the condition distributions.
-  mat <- matrix(ncol=2, nrow = M)
-  x <- 1
-  y <- 1
-  mat[1, ] <- c(x, y)
-  for (i in 2:M) {
-      x <- Exp.Bounded(y, B)
-      y <- Exp.Bounded(x, B)
-      mat[i,] <- c(x, y)
-  }
-  layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
-  plot(mat, main="Joint Distribution", xlab="X",ylab="Y")
-  hist(mat[ , 1], main="Marginal dist. of X", xlab="X")
-  hist(mat[ , 2], main="Marginal dist. of Y", xlab="Y")
-}
-@
-<<gibbsSampler, fig=True, height=6, width=8>>=
-Gibbs.Sampler(1000, 10)
-@
-
-\subsection{Hamiltonian Monte Carlo}
-The physics used in the Hamiltonian Monte Carlo describe the total
-energy of a system composed by a frictionaless particle sliding on a surface.
-\section{Physical Interpretation}
+\section{Hamiltonian Monte Carlo}
+The Hamiltonian Monte Carlo, along with slice sampling, will be one of the ``set
+pieces" of this paper. That is, it will be one of the more in-depth sections.
+\subsection{Hamiltonian Physics}
+Here we give an introduction to Hamiltonian physics and give an example
+of a simple system we can model with it (for instance a puck sliding over a
+raised, friction less surface). We will also discuss the physical interpretation. 
 A canonical ensemble is the statistical ensemble used to represent the possible
 states of a mechanical system in thermal equilibrium with a heat bath. The 
 idea that ``a statistical ensemble is a probability distribution for the state 
 of the system." was introduced by J. Willard Gibbs in 1902 (Elementary Principles in Statistical Mechanics).
-
+\subsection{Symplectic Geometry}
+Certain properties of symplectic geometry allow us to make the analogy between
+Hamiltonian physics and Markov Chain Monte Carlo. We discuss those 
+important details in this section to elucidate some of the deeper aspects
+of the physical interpretation of Hamiltonian systems.
+\section{Improvements}
+\subsection{Results}
+I would like to end by giving a comparison of the many techniques we discussed
+over the course of the paper. In their respective sections, we have have used
+toy examples to demonstrate how a sampler worked. Here, I would like to present
+the samplers with degenerate distributions and see how they perform. 
+\subsection{Moving forward}
+Given the shortcoming we find in the previous section, we will cover the ways
+in which we may attempt to ameliorate them. This may involve
+novel research or it may involve introducing variant of certain samplers,
+as we did with the slice sampler
+\section{Conclusion}
+I think this is pretty self-explanatory. We will tie up any loose ends, though 
+most of them will have been taken care of in the previous section.
 \end{document}

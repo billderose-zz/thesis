@@ -1,45 +1,53 @@
-library(animation)
+library(hash)
+library(randomForest)
+map <- hash()
+
+Learn.Interval <- function(u, l, model) {
+
+} 
+
 
 dist.x <- seq(-10, 10, length = 1000)
-ani.options(interval = .05, nmax = 1000)
-
-
-Slice.Sample <- function(x0, f, nsample, step = 1, min, max) {
+Slice.Sample <- function(x0, f, nsample, step = 1) {
   x <- c(x0)
-  saveGIF({
-  for (i in 2:ani.options("nmax")) {
-    hist(x, xlim = c(-4, 4), ylim = c(0, 1), prob = TRUE, breaks = 30)
+  interval <- data.frame()
+  for (i in 2:nsample) {
     u <- runif(1, 0, f(x[i - 1]))
-    lines(dist.x, f(dist.x), type = "l")
-    segments(x[i - 1], 0, x[i - 1], f(x[i - 1]))
-    l <- x[i - 1] - 1
-    r <- x[i - 1] + 1
-    while (u < f(l)) {
-      l <- l - step
-    }
-    while (u < f(r)) {
-      r <- r + step
+    lower <- x[i - 1] - 1
+    upper <- x[i - 1] + 1
+    if (i > 10) {
+      lowerModel <- randomForest(x = interval[ , c("u", "x")], y = interval[ , "lower"])
+      lower <- predict(lowerModel, data.frame(u = u, x = x[i - 1]))
+      upperModel <- randomForest(x = interval[ , c("u", "x")], y = interval[ , "upper"])
+      upper <- predict(upperModel, data.frame(u = u, x = x[i - 1]))
+    } else {
+      lower <- x[i - 1] - 1
+      upper <- x[i - 1] + 1
+      while (u < f(lower)) {
+        lower <- lower - step
+      }
+      while (u < f(upper)) {
+        upper <- upper + step
+      }
     }
     while (TRUE) {
-      x.proposal <- runif(1, l, r)
+      x.proposal <- runif(1, lower, upper)
       if (u < f(x.proposal)) {
         x[i] <- x.proposal
-        points(x.proposal, u, pch = 20)
         break
       } else { # drew sample above curve, must shrink slice
-        if (x.proposal < l) {
-          l <- x.proposal
-        } else if (x.proposal > r) {
-          r <- x.proposal
+        if (x.proposal < lower) {
+          lower <- x.proposal
+        } else if (x.proposal > upper) {
+          upper <- x.proposal
         }
       }
     }
-    points(c(l, r), c(u, u), pch = 4, col = "red")
-    segments(l, u, r, u)
-    segments(x.proposal, u, x.proposal, 0, lty = 2)
-    ani.pause()
-  }}, movie.name = "slice.gif")
+    interval[i - 1, "u"] <- u
+    interval[i - 1, "x"] <- x[i - 1]
+    interval[i - 1, "lower"] <- lower
+    interval[i - 1, "upper"] <- upper
+  }
   return(x)
 }
-hist(Slice.Sample(1, dnorm, ani.options("nmax"), 1, -100, 100))
 
