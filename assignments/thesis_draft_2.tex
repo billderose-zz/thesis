@@ -8,8 +8,7 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{mathrsfs}
-%\usepackage{cite}
-\usepackage[backend=bibtex]{biblatex}
+\usepackage{cite}
 
 \makeatletter
 \def\BState{\State\hskip-\ALG@thistlm}
@@ -27,7 +26,7 @@
 \title{Sampling from High Dimensional Distributions}
 \author{Bill DeRose \\ Advisor: Gabe Chandler}
 \begin{document}
-\SweaveOpts{concordance=TRUE}
+\input{thesis_draft_2-concordance}
 \input{thesis_draft_2-concordance}
 \maketitle
 \tableofcontents
@@ -45,14 +44,30 @@ We should be so lucky to face the problem of designing algorithms to generate tr
 \end{figure}
 The image on the left is genuine randomness, while the image on the right is too evenly spaced for it to be \emph{truly} random. In actuality, the left plots star locations while the right depicts the positions of glowworms on the ceiling of a cave in New Zealand. The glowworms spread themselves out evenly to reduce competition for food amongst themselves; the even distribution is the result of a non-random force. The right image suggests true randomness appears in clusters.
 
-In our study of sampling methods, we assume the existence of a random
-number generator that allows us to sample $U \sim \mbox{Unif}(0,1)$. From this, we explore
-the techniques and methods that allow us to sample from more complex distributions. We begin with a
-review of classical sampling (simple sampling, rejection sampling, importance sampling) before directing the majority of our attention to Monte Carlo based methods. In specific, we explore the advantages of Hamiltonian and gradient based Monte Carlo over traditional Markov Chain Monte Carlo simulations.
-By treating the state space as a dynamical system, we may apply Hamiltonian dynamics to 
-explore the target distribution more efficiently. However, before we embark on the discussion of gradient methods, we discuss the classical Markov Chain Monte Carlo algorithm and its application to sampling from high-dimensional distributions. 
+Though we will not discuss methods of generating uniform random variates, their importance to us
+is not a small one. From here on we assume the existence of a random
+number generator that allows us to sample $U \sim \mbox{Unif}(0,1)$. For many problems in probability, artificial intelligence, and computational statistics, exact inference is intractable and we must turn to approximations. This thesis aims to explore approximation techniques that arise from numerical sampling, or Monte Carlo methods. In a sentence, our goal will be to find the expectation of some function $h$ with respect to some probability distribution $f$. This appears in a Bayesian  setting when we would like to sample from a posterior distribution to evaluate expectations.
+
+We begin with a simple review of random variate generation before moving to more advanced techniques that allow us to sample from more complex distributions. We begin with a
+review of classical sampling (simple sampling, rejection sampling, importance sampling) before directing the majority of our attention to Monte Carlo based methods. In specific, we explore the advantages of slice sampling and gradient based Monte Carlo over traditional Markov Chain Monte Carlo simulations. In some cases we will
+prove the convergence  of such Markov Chains, while in others we will point the reader in the right direction
+direction. Finally, once we have covered the basics of these sampling methods, we will take a look at applications
+and more recent research that allow us to speed up the traditional algorithms.
 \subsection{Related works}
-In this section, I will discuss the works on which my thesis and result depend. I imagine I will draw heavily from my annotated bibliography to give credit to my sources. 
+
+Many of our results are generalizations or applications of the Metropolis algorithm that first appeared in \cite{metropolis1953equation} and
+was revised into the Metropolis-Hastings in \cite{hastings1970monte}. Though the naming of the actual algorithm
+has been disputed (it is often asserted that Metropolis did nearly no work on the original paper and simply oversaw the co-authors), we refer to the algorithm as Metropolis-Hastings for historical reasons.  Metropolis published
+his paper while working at Los Alamos Scientific Lab in the field of computational statistics. The term ``Monte Carlo"
+was coined because some of the first applications were to card games, like those in the Monte Carlo Casino in Monaco. Such Monte Carlo simulations were important in the development of the Manhattan project.
+
+Though one of the more famous samplers, the Gibbs sampler, was introduced by Stuart and Geman in 1984 \cite{geman1984stochastic} these sorts of numerical sampling techniques really became vogue again in the early 1990's arguable because of the
+advent of the personal computer and wider access to more computational power. The Gibbs sampler appeared nearly two decades before Neal's slice sampler \cite{neal2003slice}, though for our purposes we will
+discuss the 2D slice sampler to motivate the Gibbs sampler. We will draw heavily from \cite{mira2002efficiency}, \cite{roberts1998}, \cite{robert2004monte} in our proof of uniform ergodicity of the 2D slice sampler. Neal is also responsible for results relating to the Hybrid Monte Carlo \cite{brooks2011handbook} which uses gradient information to navigate the search space more efficiently. As a general introduction to each of these sampling
+techniques, \cite{bishop2006pattern} has proven invaluable.
+
+More recent results have been due to the proliferation of big data which, in the Bayesian setting, necessitates the ability to sample from a posterior distribution with billions of data points. Sequential hypothesis testing
+has proved to reduce some of the budget required for Metropolis-Hastings \cite{korattikara2013austerity}. This technique has also been applied to the slice sampler, though the paper has not yet been published. In the later portions of this paper, we discuss these applications and their improvements on real world data.
 \subsection{Prospective}
 At this point I will have either given sufficient motivation for my research or will provide it here. I would like to present a few interesting (and probably difficult cases) where traditional techniques run into problems. I hope
 to give a glimpse of the framework of how I think all these ideas fit together and how the reader should
@@ -105,12 +120,12 @@ Include example/simulations for a distribution for which the inverse transform
 is possible.
 \end{exmp}
 \begin{exmp}
-The cumulative distribution function of the normal distibution
+The cumulative distribution function of the normal distribution
 cannot be expressed in a closed for because $$\Phi(x) = \dfrac{1}{\sqrt{2\pi}}\int_{-\infty}^x e^{-z^2/2}\,dz$$
 Luckily, there exist approximations of $\Phi$ and $\Phi^{-1}$ up to an arbitrary 
-precision, so we may still confidantly use the inverse transform to generate normal 
+precision, so we may still confidently use the inverse transform to generate normal 
 random variables. We are not always this lucky and must look to other methods
-that allow us to sample from distribtions without relying on strong analytic 
+that allow us to sample from distributions without relying on strong analytic 
 properties of our target distribution. 
 \end{exmp}
 
@@ -133,7 +148,7 @@ because sampling $Y \sim f_X(x)$ and $U | Y \sim \mathcal{U}[0, f_X(x)]$ defeats
 the purpose of introducing the auxiliary variable. If we could sample $Y \sim f_X(x)$
 we would already be done. As we will see in slice sampling, the solution
 is to generate pairs $(Y, U)$ from a larger set and only accept them
-if they satisy the constraint.
+if they satisfy the constraint.
 
 We can come up with simple cases in 1-dimension if $f_X$ is bounded by $m$
 and the support of $f_X$, denoted $\supp f_X$, is $(a, b)$. Sampling
@@ -189,7 +204,7 @@ and accept if $u \le f_X(x)$
 This leads directly to the Accept-Reject algorithm, which is an implementation
 of this theorem.
 \begin{algorithm}
-\caption{Accept-Reject Sample}\label{euclid}
+\caption{Accept-Reject Sample}
 \begin{algorithmic}[1]
 \Procedure{}{}
 \State Generate $X \sim g$, $U \sim \mathcal{U}[0, Mg(X)]$
@@ -246,14 +261,14 @@ Irreducibility is another important property of Markov chains which says that
 regardless of the current state of the chain, it is possible to reach any other
 state in a finite amount of time.
 \begin{defn}
-A Markov chain is \emph{irreducibile} if $\exists
+A Markov chain is \emph{irreducible} if $\exists
 m < \infty$ such that
 $$\pr{(X_{n+m} = x_j | X_n = x_i)} \ge 0$$
 for all $i, j$. 
 \end{defn}
 The property of irreducibility is a first measure of the sensitivity of the Markov chain
 to the initial conditions (Casella, Springer). Once we have shown the irreducibility
-of a chain, it guarntees convergence.
+of a chain, it guarantees convergence.
 
 \begin{defn}
 A set $C$ is \emph{small} if there exists an $m > 0$ and a nonzero measure
@@ -460,41 +475,44 @@ of $f_1$ is thus a small set and uniform ergodicity follows (does it? what about
 \end{proof}
 
 Our implementation of the slice sampler may be seen below
-<<fig=TRUE>>=
-dist.x <- seq(-10, 10, length = 1000)
-Slice.Sample <- function(x0, f, nsample, step = 1) {
-  x <- c(x0)
-  for (i in 2:nsample) {
-    u <- runif(1, 0, f(x[i - 1]))
-    l <- x[i - 1] - 1
-    r <- x[i - 1] + 1
-    while (u < f(l)) {
-      l <- l - step
-    }
-    while (u < f(r)) {
-      r <- r + step
-    }
-    while (TRUE) {
-      x.proposal <- runif(1, l, r)
-      if (u < f(x.proposal)) {
-        x[i] <- x.proposal
-        break
-      } else { # drew sample above curve, must shrink slice
-        if (x.proposal < l) {
-          l <- x.proposal
-        } else if (x.proposal > r) {
-          r <- x.proposal
-        }
-      }
-    }
-  }
-  return(x)
-}
-density <- function(x) { 
-  return(dnorm(x, -2, 0.4) + 3 * dnorm(x, 1, 0.5) + dnorm(x, 4, 0.4))
-}
-hist(Slice.Sample(1, density, 1000, 1), breaks = 100, prob = T)
-@
+\begin{Schunk}
+\begin{Sinput}
+> dist.x <- seq(-10, 10, length = 1000)
+> Slice.Sample <- function(x0, f, nsample, step = 1) {
++   x <- c(x0)
++   for (i in 2:nsample) {
++     u <- runif(1, 0, f(x[i - 1]))
++     l <- x[i - 1] - 1
++     r <- x[i - 1] + 1
++     while (u < f(l)) {
++       l <- l - step
++     }
++     while (u < f(r)) {
++       r <- r + step
++     }
++     while (TRUE) {
++       x.proposal <- runif(1, l, r)
++       if (u < f(x.proposal)) {
++         x[i] <- x.proposal
++         break
++       } else { # drew sample above curve, must shrink slice
++         if (x.proposal < l) {
++           l <- x.proposal
++         } else if (x.proposal > r) {
++           r <- x.proposal
++         }
++       }
++     }
++   }
++   return(x)
++ }
+> density <- function(x) { 
++   return(dnorm(x, -2, 0.4) + 3 * dnorm(x, 1, 0.5) + dnorm(x, 4, 0.4))
++ }
+> hist(Slice.Sample(1, density, 1000, 1), breaks = 100, prob = T)
+\end{Sinput}
+\end{Schunk}
+\includegraphics{thesis_draft_2-001}
 
 \subsection{Reflective Slice Sampling}
 Here we assume that we are able to compute both $\hat{p}(x)$ and its gradient. We proceed 
@@ -509,10 +527,6 @@ We use the gradient to tell us how we should update the momentum when we
 are pushed out of the target distribution. The reflected momentum direction is 
 a function of the incident momentum and the partial derivatives.
 
-\subsection{Convergence of the Slice Sampler}
-After discussing the implementation details of the slice sampler, we will
-verify that it is in fact uniformly ergodic, ensuring that the Markov Chain
-converges to the desired stationary distribution.
 \subsection{Refractive Slice Sampling}
 Here and in the following section we touch on variations of the slice sampler.
 At this point it is not clear to what extent we will deal with them. It may
@@ -594,6 +608,6 @@ as we did with the slice sampler
 \section{Conclusion}
 I think this is pretty self-explanatory. We will tie up any loose ends, though 
 most of them will have been taken care of in the previous section.
-\bibliographystyle{plain-annote}
+\bibliographystyle{plain}
 \bibliography{thesis_bibliography}{}
 \end{document}

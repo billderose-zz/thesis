@@ -1,0 +1,148 @@
+% This file was created with JabRef 2.10.
+% Encoding: MacRoman
+
+
+@Book{bishop2006pattern,
+  Title                    = {Pattern {R}ecognition and {M}achine {L}earning},
+  Author                   = {Bishop, Christopher},
+  Publisher                = {Springer},
+  Year                     = {2006},
+
+  Address                  = {New York},
+
+  Annote                   = {{This text provides
+ a good review of statistical/probability theory, issues of dimensionality, 
+ decision theory, and information theory in its introduction.
+ Where it has proved most helpful, though, is in its chapter on ``Sampling
+ Methods" which discusses the inverse transform method, rejection sampling,
+ importance sampling, and other Markov Chain Monte Carlo algorithms related
+ to my research topic (Metropolis-Hastings algorithm, Gibbs/slice sampling, Hamiltonian Monte Carlo).
+\par
+ While the text does not provide any implementations nor pseudocode for the sampling methods it deals with,
+ it contains many good images that help give an
+ intuitive understanding of why the algorithms work. Similarly, though this
+ text does not include proofs of convergence for the MCMC methods it discusses, it gives enough of a 
+low-level mathematical explaination that the actual proofs may be understood and attempted by the reader.}},
+  ISBN                     = {0387310738}
+}
+
+@Book{brooks2011handbook,
+  Title                    = {Handbook of {M}arkov {C}hain {M}onte {C}arlo},
+  Author                   = {Brooks, Steve},
+  Publisher                = {CRC Press/Taylor \& Francis},
+  Year                     = {2011},
+
+  Address                  = {Boca Raton},
+
+  Annote                   = {{This text provides a deeper dive into Markov Chain Monte Carlo methods than the general overview in \emph{Pattern Recognition and Machine Learning}. Given my research interest in gradient based MCMC, this text will be useful because it contains an entire section written by Radford Neal (who first introduced HMC) that covers the physics, convergence, and tuning of the Hamiltonian Monte Carlo. Further, it contains implementations of many MCMC methods, in addition to case studies which may prove useful in finding illustrative examples and applications.\par The list of contributors
+includes many world class authors (Andrew Gelman, Radford Neal, Mark Huber, Charles Geyer) and has a good split of theory/foundational topics and practical applications in astrophysics, brain imaging, and social sciences. Where the text will prove most useful is in its rigorous treatment of the convergence properties MCMC algorithms must satisfy.}},
+  ISBN                     = {978-1420079418}
+}
+
+@Article{geman1984stochastic,
+  Title                    = {Stochastic relaxation, Gibbs distributions, and the Bayesian restoration of images},
+  Author                   = {Geman, Stuart and Geman, Donald},
+  Journal                  = {Pattern Analysis and Machine Intelligence, IEEE Transactions on},
+  Year                     = {1984},
+  Number                   = {6},
+  Pages                    = {721--741},
+
+  Publisher                = {IEEE}
+}
+
+@Article{hastings1970monte,
+  Title                    = {Monte Carlo sampling methods using Markov chains and their applications},
+  Author                   = {Hastings, W Keith},
+  Journal                  = {Biometrika},
+  Year                     = {1970},
+  Number                   = {1},
+  Pages                    = {97--109},
+  Volume                   = {57},
+
+  Publisher                = {Biometrika Trust}
+}
+
+@Article{korattikara2013austerity,
+  Title                    = {Austerity in MCMC land: Cutting the Metropolis-Hastings budget},
+  Author                   = {Korattikara, Anoop and Chen, Yutian and Welling, Max},
+  Journal                  = {arXiv preprint arXiv:1304.5299},
+  Year                     = {2013}
+}
+
+@Article{metropolis1953equation,
+  Title                    = {Equation of state calculations by fast computing machines},
+  Author                   = {Metropolis, Nicholas and Rosenbluth, Arianna W and Rosenbluth, Marshall N and Teller, Augusta H and Teller, Edward},
+  Journal                  = {The journal of chemical physics},
+  Year                     = {1953},
+  Number                   = {6},
+  Pages                    = {1087--1092},
+  Volume                   = {21},
+
+  Publisher                = {AIP Publishing}
+}
+
+@Book{meyn2009markov,
+  Title                    = {Markov {C}hains and {S}tochastic {S}tability},
+  Author                   = {Meyn, Sean P and Tweedie, Richard L},
+  Publisher                = {Cambridge University Press},
+  Year                     = {2009},
+
+  Annote                   = {Though mostly over my head, this text seemed to be the origin of what we call Doeblin's condition and rely on
+in our proof of uniform ergodicity of the slice sampler. Luckily, this text actually contains the proof, however difficult they may be, of Doeblin's condition.}
+}
+
+@Article{mira2002efficiency,
+  Title                    = {Efficiency and {C}onvergence {P}roperties of {S}lice {S}amplers},
+  Author                   = {Mira, Antonietta and Tierney, Luke},
+  Journal                  = {Scandinavian Journal of Statistics},
+  Year                     = {2002},
+  Number                   = {1},
+  Pages                    = {1--12},
+  Volume                   = {29},
+
+  Annote                   = {This text is the source of many of the proofs of uniform ergodicity of the slice sampler. A sufficient
+condition for uniform ergodicity of the slice sampler is given and an upper bound for the ration of convergence to stationarity is provided.},
+  Publisher                = {Wiley Online Library}
+}
+
+@Article{neal2003slice,
+  Title                    = {Slice sampling},
+  Author                   = {Neal, Radford M},
+  Journal                  = {Annals of statistics},
+  Year                     = {2003},
+  Pages                    = {705--741},
+
+  Publisher                = {JSTOR}
+}
+
+@Book{robert2004monte,
+  Title                    = {Monte {C}arlo {S}tatistical {M}ethods},
+  Author                   = {Robert, Christian},
+  Publisher                = {Springer},
+  Year                     = {2004},
+
+  Address                  = {New York},
+
+  Annote                   = {{Although this text is intended for ``a second year graduate course", it is of use to us because of its in-depth treatment of Markov Chain Monte Carlo techniques. The text contains chapters on reversible jump sampling, slice sampling, Gibbs sampling, and perfect sampling. Our research will almost certainly cover two of these topics and may end up delving into the basics of the others.\par The main reason for using a text like this is, as before, the seriousness with which it treats properties such as convergence and detailed balance. Further, in none of the other sources have I found as thorough an exploration of slice sampling, a key precursor to the Hamiltonian Monte Carlo and a great example of how introducing auxiliary variables can simplify the sampling problem. Additionally, since it is intended for use as a textbook, it contains questions with solutions available online.}},
+  ISBN                     = {0387212396}
+}
+
+@Article{roberts1998,
+  Title                    = {On Convergence Rates of Gibbs Samplers for Uniform Distributions},
+  Author                   = {Roberts, Gareth O. and Rosenthal, Jeffrey S.},
+  Journal                  = {The Annals of Applied Probability},
+  Year                     = {1998},
+  Number                   = {4},
+  Pages                    = {pp. 1291-1302},
+  Volume                   = {8},
+
+  Abstract                 = {We consider a Gibbs sampler applied to the uniform distribution on a bounded region R $\subseteq$ Rd. We show that the convergence properties of the Gibbs sampler depend greatly on the smoothness of the boundary of R. Indeed, for sufficiently smooth boundaries the sampler is uniformly ergodic, while for jagged boundaries the sampler could fail to even be geometrically ergodic.},
+  Copyright                = {Copyright © 1998 Institute of Mathematical Statistics},
+  ISSN                     = {10505164},
+  Jstor_articletype        = {research-article},
+  Jstor_formatteddate      = {Nov., 1998},
+  Language                 = {English},
+  Publisher                = {Institute of Mathematical Statistics},
+  Url                      = {http://www.jstor.org/stable/2667181}
+}
+
